@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: br_user
+      POSTGRES_PASSWORD: br_pass
+      POSTGRES_DB: br_audit
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./app/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./app/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg2://br_user:br_pass@db:5432/br_audit
+      RULESET_DIR: /app/rules/v1
+      AUDIT_LOG_DIR: /app/audit_logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - ./rules:/app/rules
+      - ./audit_logs:/app/audit_logs
